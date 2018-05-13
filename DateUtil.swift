@@ -1,8 +1,8 @@
 //
-//  DateConvert.swift
-//  DateConvert
+//  DateUtil.swift
+//  
 //
-//  Created by Yuta S. on 2018/03/28.
+//  Created by Yuta S. on 2018/02/09.
 //  Copyright © 2018年 Yuta S. All rights reserved.
 //
 
@@ -16,28 +16,51 @@ class DateUtil {
     /// - yyyyMMdd: yyyyMMdd
     /// - yyyyMMddJP: yyyy年MM月dd日
     enum DateStyle {
+        /// yyyy/MM
+        case yyyyMMSlash
         /// yyyyMMdd
         case yyyyMMdd
         /// yyyy/MM/dd
         case yyyyMMddSlash
         /// yyyy/MM/dd HH:mm:ss.sss
         case yyyyMMddHHmmssSss
+        /// yyyy/MM/dd HH:mm:ss
+        case yyyyMMddHHmmss
         /// yyyy年MM月dd日
         case yyyyMMddJP
-        
+        /// HH:mm
+        case HHmm
+        /// HH:mm:ss
+        case HHmmss
+        /// yyyy/MM/dd HH:mm
+        case yyyyMMddHHmm
+        /// MM月dd日
+        case MMddJP
         /// 日付スタイルを文字列で返す
         ///
         /// - Returns: 文字列
         internal func setFromatI() -> String {
             switch self {
+            case .yyyyMMSlash:
+                return "yyyy/MM"
             case .yyyyMMdd:
                 return "yyyyMMdd"
             case .yyyyMMddSlash:
                 return "yyyy/MM/dd"
             case .yyyyMMddHHmmssSss:
                 return "yyyy/MM/dd HH:mm:ss.sss"
+            case .yyyyMMddHHmmss:
+                return "yyyy/MM/dd HH:mm:ss"
             case .yyyyMMddJP:
                 return "yyyy年MM月dd日"
+            case .HHmm:
+                return "HH:mm"
+            case .HHmmss:
+                return "HH:mm:ss"
+            case .yyyyMMddHHmm:
+                return "yyyy/MM/dd HH:mm"
+            case .MMddJP:
+                return "MM月dd日"
             }
         }
     }
@@ -51,13 +74,13 @@ class DateUtil {
     ///   - string: 変換したい文字列
     ///   - style: 日付のスタイル
     /// - Returns: 変換後の値（Date）
-    internal func toDateI(from string: String, style: DateStyle) -> Date {
+    internal func toDateI(from string: String, style: DateStyle, locale: Locale = Locale(identifier: "ja_JP"), timeZone: TimeZone! = TimeZone(identifier: "Asia/Tokyo")) -> Date {
         let dateFomatter = DateFormatter()
-        dateFomatter.locale = Locale(identifier: "ja_JP")
+        dateFomatter.locale = locale
+        dateFomatter.timeZone = timeZone
         dateFomatter.calendar = Calendar(identifier: .gregorian)
         dateFomatter.dateFormat = style.setFromatI()
         guard let date = dateFomatter.date(from: string) else {
-            assertionFailure("Date変換エラー")
             return Date()
         }
         return date
@@ -69,9 +92,10 @@ class DateUtil {
     ///   - date: 変換したいDate型
     ///   - style: 日付のスタイル
     /// - Returns: 変換後の値（文字列）
-    internal func toStringI(from date: Date?, style: DateStyle) -> String {
+    internal func toStringI(from date: Date?, style: DateStyle, locale: Locale = Locale(identifier: "ja_JP"), timeZone: TimeZone! = TimeZone(identifier: "Asia/Tokyo")) -> String {
         let dateFormatter = DateFormatter()
-        dateFormatter.locale = Locale(identifier: "ja_JP")
+        dateFormatter.locale = locale
+        dateFormatter.timeZone = timeZone
         dateFormatter.calendar = Calendar(identifier: .gregorian)
         dateFormatter.dateFormat  = style.setFromatI()
         guard let dataValue = date else { return "" }
@@ -90,4 +114,32 @@ class DateUtil {
         
         return between
     }
+    
+    /// DateのHH:mm:ssを0にセットしたDateを返す
+    ///
+    /// - Parameters:
+    ///   - date: 基準とするDate
+    ///   - timezone: 変換後の基準とするTimeZone
+    /// - Returns: 引数のHH:mm:ssを0にセットしたDate
+    internal func convertToYYYYMMDD(from date: Date, timezone: TimeZone = TimeZone(identifier: "UTC")!) -> Date {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = timezone
+        guard let convetedDate: Date = calendar.date(bySettingHour: 0, minute: 0, second: 0, of: date) else {
+            assertionFailure("Date変換エラー")
+            return Date()
+        }
+        return convetedDate
+    }
+    
+    /// N日前を取得
+    ///
+    /// - Parameters:
+    ///   - date: 基準日
+    ///   - n: n日前のn
+    /// - Returns: n日前のデータ
+    internal func getNDaysBefore(date: Date, n: Int ) -> Date? {
+        let nDaysBefore = Calendar.current.date(byAdding: .day, value: -n, to: date)!
+        return nDaysBefore
+    }
+    
 }
